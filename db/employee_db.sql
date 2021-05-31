@@ -28,4 +28,4 @@ SELECT employee.first_name, employee.last_name, role.title, role.salary, departm
 FROM ((role
 INNER JOIN employee ON role.id = employee.role_id)
 INNER JOIN department ON role.department_id = department.id)
-ORDER BY dept_name
+ORDER BY dept_name;

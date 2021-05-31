@@ -23,12 +23,29 @@ connection.connect((err) => {
 const afterConnection = () => {
     connection.query('SELECT * FROM department', (err, res) => {
     if (err) throw err;
-    viewData();
+    if (res.length){
+        console.log('array has stuff')
+    } else {
+        console.log('array has no stuff')
+    }
+    console.log(res);
+    //viewData();
   });
 };
 
+const queryDepartments = () => {
+    connection.query('SELECT * FROM department', (err, res) => {
+    if (err) throw err;
+    if (res.length){
+        
+       return res;
+    } else {
+        console.log('No departments exist.');
+    }
+}
+
 // function which prompts the user for what action they should take
-function questionsMain() {
+const questionsMain = () => {
   inquirer
     .prompt({
       name: "mainMenu",
@@ -53,7 +70,7 @@ function questionsMain() {
 }
 
 // function to prompt for type of add
-function questionsAdd() {
+const questionsAdd = () => {
   inquirer
     .prompt({
       name: "typeOfAdd",
@@ -76,20 +93,20 @@ function questionsAdd() {
     });
 }
 
-function addDepartment(){
+const addDepartment = () => {
 
 }
 
-function addRole(){
+const addRole = () => {
     
 }
 
-function addEmployee(){
+const addEmployee = () => {
     
 }
 
 // function to prompt for type of update
-function questionsUpdate() {
+const questionsUpdate = () => {
   inquirer
     .prompt({
       name: "typeOfUpdate",
@@ -113,7 +130,7 @@ function questionsUpdate() {
 }
 
 // use console table to print the database table
-function viewData() {
+const viewData = () => {
     const showAllQuery = `SELECT employee.first_name, employee.last_name, role.title, role.salary, department.dept_name
                 FROM ((role
                 INNER JOIN employee ON role.id = employee.role_id)
