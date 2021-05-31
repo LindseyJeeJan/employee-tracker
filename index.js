@@ -9,6 +9,7 @@ const connection = mysql.createConnection({
   user: 'root',
   password: 'base4D8t8',
   database: 'employee_db',
+  multipleStatements: true
 });
 
 // connect and 
@@ -20,9 +21,9 @@ connection.connect((err) => {
 
 // get data from table and then begin prompting user
 const afterConnection = () => {
-  connection.query('SELECT * FROM department', (err, res) => {
+    connection.query('SELECT * FROM department', (err, res) => {
     if (err) throw err;
-    questionsMain();
+    viewData();
   });
 };
 
@@ -75,6 +76,18 @@ function questionsAdd() {
     });
 }
 
+function addDepartment(){
+
+}
+
+function addRole(){
+    
+}
+
+function addEmployee(){
+    
+}
+
 // function to prompt for type of update
 function questionsUpdate() {
   inquirer
@@ -100,14 +113,17 @@ function questionsUpdate() {
 }
 
 // use console table to print the database table
-function questionsUpdate() {
-    // console.table([
-    //   {
-    //     name: 'foo',
-    //     age: 10
-    //   }, {
-    //     name: 'bar',
-    //     age: 20
-    //   }
-    // ]);
+function viewData() {
+    const showAllQuery = `SELECT employee.first_name, employee.last_name, role.title, role.salary, department.dept_name
+                FROM ((role
+                INNER JOIN employee ON role.id = employee.role_id)
+                INNER JOIN department ON role.department_id = department.id)
+                ORDER BY dept_name`;
+    connection.query(showAllQuery, (err, res) => {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        // Prompt for main menu again
+        questionsMain()
+    });
 }
