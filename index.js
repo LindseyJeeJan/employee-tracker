@@ -19,47 +19,69 @@ connection.connect((err) => {
   afterConnection();
 });
 
-// get data from table and then begin prompting user
+// begin prompting user
 const afterConnection = () => {
-    connection.query('SELECT * FROM department', (err, res) => {
-    if (err) throw err;
-    if (res.length){
-        console.log('array has stuff')
-    } else {
-        console.log('array has no stuff')
-    }
-    console.log(res);
-    //viewData();
-  });
+    questionsMain();
 };
 
 const queryDepartments = () => {
+    // check department table for content, return content if it exists
     connection.query('SELECT * FROM department', (err, res) => {
-    if (err) throw err;
-    if (res.length){
-        
-       return res;
-    } else {
-        console.log('No departments exist.');
-    }
+        if (err) throw err;
+        if (res.length){
+            return res;
+        } else {
+            console.log('No departments exist.');
+            return null;
+        }
+    });
+}
+
+const queryRoles = () => {
+     // check role table for content, return content if it exists
+    connection.query('SELECT * FROM role', (err, res) => {
+        if (err) throw err;
+        if (res.length){
+            return res;
+        } else {
+            console.log('No roles exist.');
+        }
+    });
+}
+
+const queryEmployees = () => {
+     // check employee table for content, return content if it exists
+    connection.query('SELECT * FROM employee', (err, res) => {
+        if (err) throw err;
+        if (res.length){
+        return res;
+        } else {
+            console.log('No employees exist.');
+        }
+    });
 }
 
 // function which prompts the user for what action they should take
 const questionsMain = () => {
+    
+    const departments = queryDepartments();
+    const roles = queryRoles();
+    const employees = queryEmployees();  
+
   inquirer
     .prompt({
       name: "mainMenu",
       type: "list",
-      message: "Would you like to ADD, UPDATE, VIEW or EXIT?",
-      choices: ["ADD", "UPDATE", "VIEW", "EXIT"]
+      message: "Would you like to ADD, UPDATE, VIEW DEPARTMENT or EXIT?",
+      choices: ["ADD", "UPDATE", "VIEW DEPARTMENT", "EXIT"]
     })
     .then(function(answer) {
       // based on their answer, either call the bid or the post functions
       if (answer.mainMenu === "ADD") {
-        questionsAdd();
+        questionsAdd(departments, roles, employees);
       } else if (answer.mainMenu === "UPDATE"){
-        questionsUpdate();
-      } else if (answer.mainMenu === "VIEW"){
+        questionsUpdate(departments, roles, employees);
+      } else if (answer.mainMenu === "VIEW DEPARTMENT"){
         viewData();
       } else {
         // exit the prompt and 
@@ -70,7 +92,7 @@ const questionsMain = () => {
 }
 
 // function to prompt for type of add
-const questionsAdd = () => {
+const questionsAdd = (departments, roles, employees) => {
   inquirer
     .prompt({
       name: "typeOfAdd",
@@ -94,19 +116,96 @@ const questionsAdd = () => {
 }
 
 const addDepartment = () => {
-
+    inquirer
+    .prompt([
+      {
+        name: "name",
+        type: "input",
+        message: "What is the name of the department?"
+      },
+    ])
+    .then(function(response) {
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(
+        "INSERT INTO department SET ?",
+        {
+          dept_name: response.name
+        },
+        function(err) {
+          if (err) throw err;
+          console.log(`Department "${response.name}" was added`);
+          // re-prompt the user for if they want to bid or post
+          questionsMain();
+        }
+      );
+    });
 }
 
 const addRole = () => {
-    
-}
+    connection.query('SELECT * FROM department', (err, results) => {
+    if (results.length === 0){
+        console.log('No departments exist. Add a department first');
+        addDepartment();
+    }
+    if (err) throw err;
+    inquirer
+    .prompt([
+    {
+      name: 'choice',
+      type: 'rawlist',
+      message: 'Which department would you like to add a role to?',
+       choices() {
+            const choiceArray = [];
+            results.forEach(({ dept_name }) => {
+              choiceArray.push(dept_name);
+            });
+            return choiceArray;
+          },
+      },
+      {
+        name: "title",
+        type: "input",
+        message: "What is the title of the role?"
+      },
+      {
+        name: "salary",
+        type: "input",
+        message: "What is the salary of the role?"
+      },
+    ])
+    .then(function(response) {
+      // when finished prompting, insert a new item into the db with that info
+      console.log(results);
+      const dept = response.choice;
+      const newId = results.find(x => x.dept_name === dept).id;
+      console.log('newID', newId);
+            // insert row into Role table with ID of chosen Department
+            connection.query(
+            "INSERT INTO role SET ?", 
+            {
+            department_id: newId,
+            title: response.title,
+            salary: response.salary,
+            },
+            (err) => {
+            if (err) throw err;
+            console.log(`Role ${response.title} was added.`);
+            // return to main menu
+            questionsMain();
+            }
+            );
+// });
+
+});
+    });
+};
 
 const addEmployee = () => {
     
 }
 
 // function to prompt for type of update
-const questionsUpdate = () => {
+const questionsUpdate = (departments, roles, employees) => {
   inquirer
     .prompt({
       name: "typeOfUpdate",
@@ -143,4 +242,4 @@ const viewData = () => {
         // Prompt for main menu again
         questionsMain()
     });
-}
+};
