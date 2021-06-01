@@ -22,7 +22,7 @@ connection.connect((err) => {
 // begin prompting user
 const afterConnection = () => {
     //questionsMain();
-    viewRoles();
+    viewDepartments();
 };
 
 const queryDepartments = () => {
@@ -243,12 +243,24 @@ const viewEmployees = () => {
     });
 };
 
-// use console table to print the employee table
+// use console table to print the role table
 const viewRoles = () => {
     const showAllQuery = `SELECT role.title, role.salary, department.dept_name 
     FROM (role 
     INNER JOIN department ON role.department_id = department.id) 
     ORDER BY dept_name;`;
+    connection.query(showAllQuery, (err, res) => {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        // Prompt for main menu again
+        questionsMain()
+    });
+};
+
+// use console table to print the role table
+const viewDepartments = () => {
+    const showAllQuery = `SELECT dept_name FROM department`;
     connection.query(showAllQuery, (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
