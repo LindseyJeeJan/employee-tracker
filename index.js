@@ -21,7 +21,8 @@ connection.connect((err) => {
 
 // begin prompting user
 const afterConnection = () => {
-    questionsMain();
+    //questionsMain();
+    viewRoles();
 };
 
 const queryDepartments = () => {
@@ -72,17 +73,17 @@ const questionsMain = () => {
     .prompt({
       name: "mainMenu",
       type: "list",
-      message: "Would you like to ADD, UPDATE, VIEW DEPARTMENT or EXIT?",
-      choices: ["ADD", "UPDATE", "VIEW DEPARTMENT", "EXIT"]
+      message: "Would you like to ADD, UPDATE, VIEW or EXIT?",
+      choices: ["ADD", "UPDATE", "VIEW", "EXIT"]
     })
     .then(function(answer) {
       // based on their answer, either call the bid or the post functions
       if (answer.mainMenu === "ADD") {
         questionsAdd(departments, roles, employees);
       } else if (answer.mainMenu === "UPDATE"){
-        questionsUpdate(departments, roles, employees);
-      } else if (answer.mainMenu === "VIEW DEPARTMENT"){
-        viewData();
+        questionUpdate(employees);
+      } else if (answer.mainMenu === "VIEW"){
+        questionsView(departments, roles, employees);
       } else {
         // exit the prompt and 
         console.log("Good bye!");
@@ -146,6 +147,7 @@ const addRole = () => {
     if (results.length === 0){
         console.log('No departments exist. Add a department first');
         addDepartment();
+        return;
     }
     if (err) throw err;
     inquirer
@@ -175,10 +177,8 @@ const addRole = () => {
     ])
     .then(function(response) {
       // when finished prompting, insert a new item into the db with that info
-      console.log(results);
       const dept = response.choice;
       const newId = results.find(x => x.dept_name === dept).id;
-      console.log('newID', newId);
             // insert row into Role table with ID of chosen Department
             connection.query(
             "INSERT INTO role SET ?", 
@@ -194,10 +194,9 @@ const addRole = () => {
             questionsMain();
             }
             );
-// });
 
 });
-    });
+});
 };
 
 const addEmployee = () => {
@@ -205,22 +204,22 @@ const addEmployee = () => {
 }
 
 // function to prompt for type of update
-const questionsUpdate = (departments, roles, employees) => {
+const questionsView = (departments, roles, employees) => {
   inquirer
     .prompt({
-      name: "typeOfUpdate",
+      name: "typeOfView",
       type: "list",
-      message: "Would you like to update a DEPARTMENT, ROLE or EMPLOYEE?",
-      choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "RETURN TO MAIN MENU"]
+      message: "Would you like to view a DEPARTMENT, ROLE or EMPLOYEE?",
+      choices: ["DEPARTMENTS", "ROLES", "EMPLOYEES", "RETURN TO MAIN MENU"]
     })
     .then(function(answer) {
       // based on their answer, update department, role, employee or return to main menu
-      if (answer.typeOfUpdate === "DEPARTMENT") {
-        addDepartment();
-      } else if (answer.typeOfUpdate === "ROLE"){
-        addRole();
-      } else if (answer.typeOfUpdate === "EMPLOYEE"){
-        addEmployee();
+      if (answer.typeOfView === "DEPARTMENTS") {
+        viewDepartments();
+      } else if (answer.typeOfView === "ROLES"){
+        viewRoles();
+      } else if (answer.typeOfView === "EMPLOYEES"){
+        viewEmployees();
       } else {
         console.log("Returning to main menu.")
         questionsMain();
@@ -228,13 +227,28 @@ const questionsUpdate = (departments, roles, employees) => {
     });
 }
 
-// use console table to print the database table
-const viewData = () => {
+// use console table to print the employee table
+const viewEmployees = () => {
     const showAllQuery = `SELECT employee.first_name, employee.last_name, role.title, role.salary, department.dept_name
                 FROM ((role
                 INNER JOIN employee ON role.id = employee.role_id)
                 INNER JOIN department ON role.department_id = department.id)
                 ORDER BY dept_name`;
+    connection.query(showAllQuery, (err, res) => {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(`All Employees \n ${res}`);
+        // Prompt for main menu again
+        questionsMain()
+    });
+};
+
+// use console table to print the employee table
+const viewRoles = () => {
+    const showAllQuery = `SELECT role.title, role.salary, department.dept_name 
+    FROM (role 
+    INNER JOIN department ON role.department_id = department.id) 
+    ORDER BY dept_name;`;
     connection.query(showAllQuery, (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
