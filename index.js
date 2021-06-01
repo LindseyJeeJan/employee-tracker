@@ -21,8 +21,8 @@ connection.connect((err) => {
 
 // begin prompting user
 const afterConnection = () => {
-    //questionsMain();
-    viewDepartments();
+    // questionsMain();
+    addEmployee();
 };
 
 const queryDepartments = () => {
@@ -116,6 +116,7 @@ const questionsAdd = (departments, roles, employees) => {
     });
 }
 
+// function to add a new department
 const addDepartment = () => {
     inquirer
     .prompt([
@@ -142,68 +143,129 @@ const addDepartment = () => {
     });
 }
 
+// function to add a new role
 const addRole = () => {
     connection.query('SELECT * FROM department', (err, results) => {
-    if (results.length === 0){
-        console.log('No departments exist. Add a department first');
-        addDepartment();
-        return;
-    }
-    if (err) throw err;
-    inquirer
-    .prompt([
-    {
-      name: 'choice',
-      type: 'rawlist',
-      message: 'Which department would you like to add a role to?',
-       choices() {
-            const choiceArray = [];
-            results.forEach(({ dept_name }) => {
-              choiceArray.push(dept_name);
-            });
-            return choiceArray;
-          },
-      },
-      {
-        name: "title",
-        type: "input",
-        message: "What is the title of the role?"
-      },
-      {
-        name: "salary",
-        type: "input",
-        message: "What is the salary of the role?"
-      },
-    ])
-    .then(function(response) {
-      // when finished prompting, insert a new item into the db with that info
-      const dept = response.choice;
-      const newId = results.find(x => x.dept_name === dept).id;
-            // insert row into Role table with ID of chosen Department
-            connection.query(
-            "INSERT INTO role SET ?", 
-            {
-            department_id: newId,
-            title: response.title,
-            salary: response.salary,
+        if (results.length === 0){
+            console.log('No departments exist. Add a department first');
+            addDepartment();
+            return;
+        }
+        if (err) throw err;
+        inquirer
+        .prompt([
+        {
+        name: 'choice',
+        type: 'rawlist',
+        message: 'Which department would you like to add a role to?',
+        choices() {
+                const choiceArray = [];
+                results.forEach(({ dept_name }) => {
+                choiceArray.push(dept_name);
+                });
+                return choiceArray;
             },
-            (err) => {
-            if (err) throw err;
-            console.log(`Role ${response.title} was added.`);
-            // return to main menu
-            questionsMain();
-            }
-            );
+        },
+        {
+            name: "title",
+            type: "input",
+            message: "What is the title of the role?"
+        },
+        {
+            name: "salary",
+            type: "input",
+            message: "What is the salary of the role?"
+        },
+        ])
+        .then(function(response) {
+        // when finished prompting, insert a new item into the db with that info
+        const dept = response.choice;
+        const newId = results.find(x => x.dept_name === dept).id;
+                // insert row into Role table with ID of chosen Department
+                connection.query(
+                "INSERT INTO role SET ?", 
+                {
+                    department_id: newId,
+                    title: response.title,
+                    salary: response.salary,
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log(`Role ${response.title} was added.`);
+                    // return to main menu
+                    questionsMain();
+                    }
+                );
 
-});
-});
+        });
+    });
 };
 
+// function to add a new employee
 const addEmployee = () => {
+   connection.query('SELECT * FROM role', (err, results) => {
+        if (results.length === 0){
+            console.log('No roles exist. Add a role first');
+            addRole();
+            return;
+        }
+        if (err) throw err;
+        inquirer
+        .prompt([
+        {
+            name: "fName",
+            type: "input",
+            message: "What is the employee's first name?"
+        },
+        {
+            name: "lName",
+            type: "input",
+            message: "What is the employee's last name?"
+        },
+        {
+        name: 'choice',
+        type: 'rawlist',
+        message: 'Which role does the employee have?',
+        choices() {
+                const choiceArray = [];
+                results.forEach(({ title }) => {
+                choiceArray.push(title);
+                });
+                return choiceArray;
+            },
+        },
+        
+        ])
+        .then(function(response) {
+        // when finished prompting, insert a new item into the db with that info
+        const role = response.choice;
+        const newId = results.find(x => x.title === role).id;
+                // insert row into Role table with ID of chosen Department
+                connection.query(
+                "INSERT INTO employee SET ?", 
+                {
+                    role_id: newId,
+                    first_name: response.fName,
+                    last_name: response.lName,
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log(`Employee ${response.fName} ${response.lName} was added.`);
+                    // return to main menu
+                    questionsMain();
+                    }
+                );
+
+        });
+    });
+}
+
+// function to update an employee
+const questionsUpdate = (employees) => {
     
 }
 
-// function to prompt for type of update
+// function to prompt for type of view
 const questionsView = (departments, roles, employees) => {
   inquirer
     .prompt({
@@ -258,7 +320,7 @@ const viewRoles = () => {
     });
 };
 
-// use console table to print the role table
+// use console table to print the department table
 const viewDepartments = () => {
     const showAllQuery = `SELECT dept_name FROM department`;
     connection.query(showAllQuery, (err, res) => {
