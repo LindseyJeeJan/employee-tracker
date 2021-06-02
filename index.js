@@ -1,6 +1,5 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
-const cTable = require('console.table');
 
 // create the connection information for the sql database
 const connection = mysql.createConnection({
@@ -21,54 +20,12 @@ connection.connect((err) => {
 
 // begin prompting user
 const afterConnection = () => {
-    // questionsMain();
-    addEmployee();
+    questionsMain();
+    // updateEmployee();
 };
-
-const queryDepartments = () => {
-    // check department table for content, return content if it exists
-    connection.query('SELECT * FROM department', (err, res) => {
-        if (err) throw err;
-        if (res.length){
-            return res;
-        } else {
-            console.log('No departments exist.');
-            return null;
-        }
-    });
-}
-
-const queryRoles = () => {
-     // check role table for content, return content if it exists
-    connection.query('SELECT * FROM role', (err, res) => {
-        if (err) throw err;
-        if (res.length){
-            return res;
-        } else {
-            console.log('No roles exist.');
-        }
-    });
-}
-
-const queryEmployees = () => {
-     // check employee table for content, return content if it exists
-    connection.query('SELECT * FROM employee', (err, res) => {
-        if (err) throw err;
-        if (res.length){
-        return res;
-        } else {
-            console.log('No employees exist.');
-        }
-    });
-}
 
 // function which prompts the user for what action they should take
 const questionsMain = () => {
-    
-    const departments = queryDepartments();
-    const roles = queryRoles();
-    const employees = queryEmployees();  
-
   inquirer
     .prompt({
       name: "mainMenu",
@@ -79,21 +36,21 @@ const questionsMain = () => {
     .then(function(answer) {
       // based on their answer, either call the bid or the post functions
       if (answer.mainMenu === "ADD") {
-        questionsAdd(departments, roles, employees);
+        questionsAdd();
       } else if (answer.mainMenu === "UPDATE"){
-        questionUpdate(employees);
+        updateEmployee();
       } else if (answer.mainMenu === "VIEW"){
-        questionsView(departments, roles, employees);
+        questionsView();
       } else {
         // exit the prompt and 
         console.log("Good bye!");
         connection.end();
       }
     });
-}
+};
 
 // function to prompt for type of add
-const questionsAdd = (departments, roles, employees) => {
+const questionsAdd = () => {
   inquirer
     .prompt({
       name: "typeOfAdd",
@@ -114,7 +71,7 @@ const questionsAdd = (departments, roles, employees) => {
         questionsMain();
       }
     });
-}
+};
 
 // function to add a new department
 const addDepartment = () => {
@@ -141,7 +98,7 @@ const addDepartment = () => {
         }
       );
     });
-}
+};
 
 // function to add a new role
 const addRole = () => {
@@ -258,15 +215,80 @@ const addEmployee = () => {
 
         });
     });
-}
+};
 
 // function to update an employee
-const questionsUpdate = (employees) => {
-    
-}
+const updateEmployee = () => {
+    // const newQuery = `SELECT CONCAT(c.first_name, ' ', c.last_name) AS full_name,
+    //    c.* FROM employee c`;
+    //     connection.query(newQuery, (err, results) => {
+    //     if (results.length === 0){
+    //         console.log('No employees exist. Add an employee first');
+    //         addEmployee();
+    //         return;
+    //     }
+    //     if (err) throw err;
+    //     inquirer
+    //     .prompt([
+    //     {
+    //     name: 'choice',
+    //     type: 'rawlist',
+    //     message: 'Which employee do you want to update?',
+    //     choices() {
+    //             const choiceArray = [];
+    //             results.forEach(({full_name}) => {
+    //             choiceArray.push(full_name);
+    //             });
+    //             return choiceArray;
+    //         },
+    //     },
+        
+    //     ])
+    //     .then(function(response) {
+    //     // when finished prompting, insert a new item into the db with that info
+    //     const person = response.choice;
+    //             connection.query('SELECT * FROM role', (err, roleResults) => {
+    //             inquirer
+    //             .prompt([
+    //             {
+    //                 name: 'choice',
+    //                 type: 'rawlist',
+    //                 message: 'What is the employees new role?',
+    //                 choices() {
+    //                         const choiceArray = [];
+    //                         roleResults.forEach(({ title }) => {
+    //                         choiceArray.push(title);
+    //                         });
+    //                         return choiceArray;
+    //                     }, 
+    //                 },  
+    //             ])         
+    //             .then(function(responseRole) {
+    //             const role = responseRole.choice;
+    //             const newId = results.find(x => x.full_name === person).id;
+    //             const roleId = responseRole.find(x => x.title === role).id;
+
+    //                 connection.query(
+    //                 "UPDATE INTO employee SET ?", 
+    //                 {
+    //                     role_id: newId,
+    //                     full_name: response.full_name,
+    //                 },
+    //                 (err) => {
+    //                     if (err) throw err;
+    //                     console.log(`Employee ${response.fName} ${response.lName} was updated.`);
+    //                     // return to main menu
+    //                     questionsMain();
+    //                     }
+    //                 );
+
+    //             });
+    //         });
+    // });
+};
 
 // function to prompt for type of view
-const questionsView = (departments, roles, employees) => {
+const questionsView = () => {
   inquirer
     .prompt({
       name: "typeOfView",
@@ -287,7 +309,7 @@ const questionsView = (departments, roles, employees) => {
         questionsMain();
       }
     });
-}
+};
 
 // use console table to print the employee table
 const viewEmployees = () => {
@@ -299,7 +321,7 @@ const viewEmployees = () => {
     connection.query(showAllQuery, (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
-        console.table(`All Employees \n ${res}`);
+        console.table(res);
         // Prompt for main menu again
         questionsMain()
     });
