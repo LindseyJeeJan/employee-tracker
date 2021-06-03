@@ -80,7 +80,7 @@ const updateEmployee = () => {
         .then(function(response) {
         // when finished prompting, insert a new item into the db with that info
         const person = response.choice;
-                connection.query('SELECT * FROM role', (err, roleResults) => {
+                connection.query('SELECT * FROM role', (err, res) => {
                 inquirer
                 .prompt([
                 {
@@ -89,7 +89,7 @@ const updateEmployee = () => {
                     message: 'What is the employees new role?',
                     choices() {
                             const choiceArray = [];
-                            roleResults.forEach(({ title }) => {
+                            res.forEach(({ title }) => {
                             choiceArray.push(title);
                             });
                             return choiceArray;
@@ -98,25 +98,29 @@ const updateEmployee = () => {
                 ])         
                 .then(function(responseRole) {
                 const role = responseRole.choice;
-                const newId = results.find(x => x.full_name === person).id;
-                const roleId = responseRole.find(x => x.title === role).id;
-
+                const newId = results.find(x => x.full_name === person).id;      
+                const roleId = res.find(x => x.title === role).id;
+                const updateQuery = 
                     connection.query(
-                    "UPDATE INTO employee SET ?", 
-                    {
-                        role_id: newId,
-                        full_name: response.full_name,
+                    "UPDATE employee SET ? WHERE ?", 
+                    [{
+                        id: newId,
                     },
+                    {  
+                        role_id: roleId,  
+                    },
+                  ],
                     (err) => {
                         if (err) throw err;
-                        console.log(`Employee ${response.fName} ${response.lName} was updated.`);
+                        console.log(`\nEmployee ${person} was updated to ${role}.\n`);
                         // return to main menu
                         questionsMain();
                         }
                     );
 
-                });
             });
+    });
+    });
     });
 };
 
