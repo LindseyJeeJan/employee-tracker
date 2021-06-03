@@ -1,5 +1,6 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
+const cTable = require('console.table');
 
 // create the connection information for the sql database
 const connection = mysql.createConnection({
@@ -11,17 +12,17 @@ const connection = mysql.createConnection({
   multipleStatements: true
 });
 
-// connect and 
+// connect and give welcome message
 connection.connect((err) => {
   if (err) throw err;
-  console.log(`connected as id ${connection.threadId}\n`);
+  console.log(`\nWelcome to the Acme Company Employee Management System!\nYou are connected as id ${connection.threadId}.\n`);
   afterConnection();
 });
 
-// begin prompting user
+// begin prompting user after connection
 const afterConnection = () => {
-    questionsMain();
-    // updateEmployee();
+    // questionsMain();
+    updateEmployee();
 };
 
 // function which prompts the user for what action they should take
@@ -30,22 +31,92 @@ const questionsMain = () => {
     .prompt({
       name: "mainMenu",
       type: "list",
-      message: "Would you like to ADD, UPDATE, VIEW or EXIT?",
-      choices: ["ADD", "UPDATE", "VIEW", "EXIT"]
+      message: `Would you like to:`,
+      choices: ["Add departments, roles and employees", "View departments, roles and employees", "Update employee's roles", "Exit the system"]
     })
     .then(function(answer) {
-      // based on their answer, either call the bid or the post functions
-      if (answer.mainMenu === "ADD") {
+      // based on their answer, add, update or view (CRU)
+      if (answer.mainMenu === "Add departments, roles and employees") {
         questionsAdd();
-      } else if (answer.mainMenu === "UPDATE"){
+      } else if (answer.mainMenu === "Update employee's roles"){
         updateEmployee();
-      } else if (answer.mainMenu === "VIEW"){
+      } else if (answer.mainMenu === "View departments, roles and employees"){
         questionsView();
       } else {
-        // exit the prompt and 
+        // exit the application and give goodbye message
         console.log("Good bye!");
         connection.end();
       }
+    });
+};
+
+// function to update an employee
+const updateEmployee = () => {
+    const newQuery = `SELECT CONCAT(c.first_name, ' ', c.last_name) AS full_name,
+       c.* FROM employee c`;
+        connection.query(newQuery, (err, results) => {
+        if (results.length === 0){
+            console.log('No employees exist. Add an employee first');
+            addEmployee();
+            return;
+        }
+        if (err) throw err;
+        inquirer
+        .prompt([
+        {
+        name: 'choice',
+        type: 'rawlist',
+        message: 'Which employee do you want to update?',
+        choices() {
+                const choiceArray = [];
+                results.forEach(({full_name}) => {
+                choiceArray.push(full_name);
+                });
+                return choiceArray;
+            },
+        },
+        
+        ])
+        .then(function(response) {
+        // when finished prompting, insert a new item into the db with that info
+        const person = response.choice;
+                connection.query('SELECT * FROM role', (err, roleResults) => {
+                inquirer
+                .prompt([
+                {
+                    name: 'choice',
+                    type: 'rawlist',
+                    message: 'What is the employees new role?',
+                    choices() {
+                            const choiceArray = [];
+                            roleResults.forEach(({ title }) => {
+                            choiceArray.push(title);
+                            });
+                            return choiceArray;
+                        }, 
+                    },  
+                ])         
+                .then(function(responseRole) {
+                const role = responseRole.choice;
+                const newId = results.find(x => x.full_name === person).id;
+                const roleId = responseRole.find(x => x.title === role).id;
+
+                    connection.query(
+                    "UPDATE INTO employee SET ?", 
+                    {
+                        role_id: newId,
+                        full_name: response.full_name,
+                    },
+                    (err) => {
+                        if (err) throw err;
+                        console.log(`Employee ${response.fName} ${response.lName} was updated.`);
+                        // return to main menu
+                        questionsMain();
+                        }
+                    );
+
+                });
+            });
     });
 };
 
@@ -55,16 +126,16 @@ const questionsAdd = () => {
     .prompt({
       name: "typeOfAdd",
       type: "list",
-      message: "Would you like to add a DEPARTMENT, ROLE or EMPLOYEE?",
-      choices: ["DEPARTMENT", "ROLE", "EMPLOYEE", "RETURN TO MAIN MENU"]
+      message: "What would you like to add?",
+      choices: ["Department", "Role", "Employee", "Return to main menu"]
     })
    .then(function(answer) {
       // based on their answer, add department, role, employee or return to main menu
-      if (answer.typeOfAdd === "DEPARTMENT") {
+      if (answer.typeOfAdd === "Department") {
         addDepartment();
-      } else if (answer.typeOfAdd === "ROLE"){
+      } else if (answer.typeOfAdd === "Role"){
         addRole();
-      } else if (answer.typeOfAdd === "EMPLOYEE"){
+      } else if (answer.typeOfAdd === "Employee"){
         addEmployee();
       } else {
         console.log("Returning to main menu.")
@@ -92,7 +163,7 @@ const addDepartment = () => {
         },
         function(err) {
           if (err) throw err;
-          console.log(`Department "${response.name}" was added`);
+          console.log(`\nDepartment "${response.name}" was sucessfully added.\n`);
           // re-prompt the user for if they want to bid or post
           questionsMain();
         }
@@ -148,7 +219,7 @@ const addRole = () => {
                 },
                 (err) => {
                     if (err) throw err;
-                    console.log(`Role ${response.title} was added.`);
+                    console.log(`\nRole ${response.title} was successfully added.\n`);
                     // return to main menu
                     questionsMain();
                     }
@@ -207,7 +278,7 @@ const addEmployee = () => {
                 },
                 (err) => {
                     if (err) throw err;
-                    console.log(`Employee ${response.fName} ${response.lName} was added.`);
+                    console.log(`\nEmployee ${response.fName} ${response.lName} was successfully added.\n`);
                     // return to main menu
                     questionsMain();
                     }
@@ -217,95 +288,25 @@ const addEmployee = () => {
     });
 };
 
-// function to update an employee
-const updateEmployee = () => {
-    // const newQuery = `SELECT CONCAT(c.first_name, ' ', c.last_name) AS full_name,
-    //    c.* FROM employee c`;
-    //     connection.query(newQuery, (err, results) => {
-    //     if (results.length === 0){
-    //         console.log('No employees exist. Add an employee first');
-    //         addEmployee();
-    //         return;
-    //     }
-    //     if (err) throw err;
-    //     inquirer
-    //     .prompt([
-    //     {
-    //     name: 'choice',
-    //     type: 'rawlist',
-    //     message: 'Which employee do you want to update?',
-    //     choices() {
-    //             const choiceArray = [];
-    //             results.forEach(({full_name}) => {
-    //             choiceArray.push(full_name);
-    //             });
-    //             return choiceArray;
-    //         },
-    //     },
-        
-    //     ])
-    //     .then(function(response) {
-    //     // when finished prompting, insert a new item into the db with that info
-    //     const person = response.choice;
-    //             connection.query('SELECT * FROM role', (err, roleResults) => {
-    //             inquirer
-    //             .prompt([
-    //             {
-    //                 name: 'choice',
-    //                 type: 'rawlist',
-    //                 message: 'What is the employees new role?',
-    //                 choices() {
-    //                         const choiceArray = [];
-    //                         roleResults.forEach(({ title }) => {
-    //                         choiceArray.push(title);
-    //                         });
-    //                         return choiceArray;
-    //                     }, 
-    //                 },  
-    //             ])         
-    //             .then(function(responseRole) {
-    //             const role = responseRole.choice;
-    //             const newId = results.find(x => x.full_name === person).id;
-    //             const roleId = responseRole.find(x => x.title === role).id;
-
-    //                 connection.query(
-    //                 "UPDATE INTO employee SET ?", 
-    //                 {
-    //                     role_id: newId,
-    //                     full_name: response.full_name,
-    //                 },
-    //                 (err) => {
-    //                     if (err) throw err;
-    //                     console.log(`Employee ${response.fName} ${response.lName} was updated.`);
-    //                     // return to main menu
-    //                     questionsMain();
-    //                     }
-    //                 );
-
-    //             });
-    //         });
-    // });
-};
-
 // function to prompt for type of view
 const questionsView = () => {
   inquirer
     .prompt({
       name: "typeOfView",
       type: "list",
-      message: "Would you like to view a DEPARTMENT, ROLE or EMPLOYEE?",
-      choices: ["DEPARTMENTS", "ROLES", "EMPLOYEES", "RETURN TO MAIN MENU"]
+      message: "What would you like to view?",
+      choices: ["Departments", "Roles", "Employees", "Return to main menu"]
     })
     .then(function(answer) {
       // based on their answer, update department, role, employee or return to main menu
-      if (answer.typeOfView === "DEPARTMENTS") {
+      if (answer.typeOfView === "Departments") {
         viewDepartments();
-      } else if (answer.typeOfView === "ROLES"){
+      } else if (answer.typeOfView === "Roles"){
         viewRoles();
-      } else if (answer.typeOfView === "EMPLOYEES"){
+      } else if (answer.typeOfView === "Employees"){
         viewEmployees();
       } else {
-        console.log("Returning to main menu.")
+        console.log("Returning to main menu.");
         questionsMain();
       }
     });
@@ -321,6 +322,7 @@ const viewEmployees = () => {
     connection.query(showAllQuery, (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
+        console.log(`\nAll Acme Company employees:\n`);
         console.table(res);
         // Prompt for main menu again
         questionsMain()
@@ -336,6 +338,7 @@ const viewRoles = () => {
     connection.query(showAllQuery, (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
+        console.log(`\nAll Acme Company roles:\n`)
         console.table(res);
         // Prompt for main menu again
         questionsMain()
@@ -348,6 +351,7 @@ const viewDepartments = () => {
     connection.query(showAllQuery, (err, res) => {
         if (err) throw err;
         // Log all results of the SELECT statement
+         console.log(`\nAll Acme Company departments:\n`)
         console.table(res);
         // Prompt for main menu again
         questionsMain()
