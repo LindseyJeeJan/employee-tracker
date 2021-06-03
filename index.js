@@ -21,8 +21,7 @@ connection.connect((err) => {
 
 // begin prompting user after connection
 const afterConnection = () => {
-    // questionsMain();
-    updateEmployee();
+    questionsMain();
 };
 
 // function which prompts the user for what action they should take
