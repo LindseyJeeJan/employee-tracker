@@ -113,11 +113,11 @@ const updateEmployee = () => {
                 const updateQuery = 
                     connection.query(
                     "UPDATE employee SET ? WHERE ?", 
-                    [{
-                        id: newId,
-                    },
-                    {  
+                    [{  
                         role_id: roleId,  
+                    },
+                    {
+                        id: newId,
                     },
                   ],
                     (err) => {
