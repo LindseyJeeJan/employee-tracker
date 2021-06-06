@@ -13,13 +13,13 @@ This application provides the ability to view and manage the departments, roles,
   * [Questions](#questions)
   
   ## Installation
-  In order to download necessary tools, first clone the repository. Navigate inside the project folder. If you do not have Node.js or npm installed, you will first need to install them.
+  In order to download necessary tools, first clone the repository. Navigate inside the project folder. If you do not have Node.js or npm installed, you will first need to install them. You will need an application to host your SQL database. I suggest using MySQL Workbench to run the include .sql files in the /db folder.
   [Install Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 
   ## Usage
   Create databases using the provided SQL files.
 
-  :movie_camera: [Walkthrough video](https://drive.google.com/file/d/1DVhy0uBv1KMpC9L0SGj92L6Dccq5aHDf/view)
+  :movie_camera: [Walkthrough video](https://drive.google.com/file/d/1SsFebhwS5efwQR869T5HOMOB4JcJYYkq/view)
 
   :camera screenshot: 
   
