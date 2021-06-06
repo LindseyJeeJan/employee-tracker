@@ -2,8 +2,33 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 const connection = require('./config/connection');
+const { prompt } = require('inquirer');
 
-// connect and give welcome message
+const typeChoices = ["Departments", "Roles", "Employees", "Return to main menu"];
+
+const promptMain = {
+  name: "mainMenu",
+  type: "list",
+  message: `Would you like to:`,
+  choices: ["Add departments, roles and employees", "View departments, roles and employees", "Update employee's roles", "Exit the system"]
+};
+
+const promptMainAdd = {
+  name: "typeOfAdd",
+  type: "list",
+  message: "What would you like to add?",
+  choices: typeChoices
+};
+
+const promptMainView = {
+  name: "typeOfView",
+  type: "list",
+  message: "What would you like to view?",
+  choices: typeChoices
+};
+
+
+    // connect and give welcome message
 connection.connect((err) => {
   if (err) throw err;
   console.log(`\nWelcome to the Acme Company Employee Management System!\nYou are connected as id ${connection.threadId}.\n`);
@@ -18,12 +43,7 @@ const afterConnection = () => {
 // function which prompts the user for what action they should take
 const questionsMain = () => {
   inquirer
-    .prompt({
-      name: "mainMenu",
-      type: "list",
-      message: `Would you like to:`,
-      choices: ["Add departments, roles and employees", "View departments, roles and employees", "Update employee's roles", "Exit the system"]
-    })
+    .prompt(promptMain)
     .then(function(answer) {
       // based on their answer, add, update or view (CRU)
       if (answer.mainMenu === "Add departments, roles and employees") {
@@ -117,19 +137,14 @@ const updateEmployee = () => {
 // function to prompt for type of add
 const questionsAdd = () => {
   inquirer
-    .prompt({
-      name: "typeOfAdd",
-      type: "list",
-      message: "What would you like to add?",
-      choices: ["Department", "Role", "Employee", "Return to main menu"]
-    })
+    .prompt(promptMainAdd)
    .then(function(answer) {
       // based on their answer, add department, role, employee or return to main menu
-      if (answer.typeOfAdd === "Department") {
+      if (answer.typeOfAdd === "Departments") {
         addDepartment();
-      } else if (answer.typeOfAdd === "Role"){
+      } else if (answer.typeOfAdd === "Roles"){
         addRole();
-      } else if (answer.typeOfAdd === "Employee"){
+      } else if (answer.typeOfAdd === "Employees"){
         addEmployee();
       } else {
         console.log("Returning to main menu.")
@@ -285,12 +300,7 @@ const addEmployee = () => {
 // function to prompt for type of view
 const questionsView = () => {
   inquirer
-    .prompt({
-      name: "typeOfView",
-      type: "list",
-      message: "What would you like to view?",
-      choices: ["Departments", "Roles", "Employees", "Return to main menu"]
-    })
+    .prompt(promptMainView)
     .then(function(answer) {
       // based on their answer, update department, role, employee or return to main menu
       if (answer.typeOfView === "Departments") {
